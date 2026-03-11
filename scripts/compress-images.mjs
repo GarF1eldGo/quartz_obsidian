@@ -6,19 +6,37 @@
 import sharp from 'sharp';
 import {readdir, stat} from 'fs/promises';
 import {join, extname} from 'path';
+import {Command} from 'commander';
+
+const program = new Command();
+
+program
+    .option('-d, --dir <path>', '图片目录', './content')
+    .option('-i, --iterations <number>', '最大压缩次数', '3')
+    .option('--jpg-quality <number>', 'JPG 质量', '80')
+    .option('--png-quality <number>', 'PNG 质量', '80')
+    .option('--webp-quality <number>', 'WEBP 质量', '80')
+    .option('--min-size <kb>', '跳过小于此大小 KB', '50');
+
+program.parse();
+
+const args = program.opts();
 
 // 配置项
 const CONFIG = {
-    // 图片源目录
-    inputDir: './content',
-    // 压缩质量（0-100）
+    inputDir: args.dir,
+
     quality: {
-        jpg: 80,
-        png: 80,
-        webp: 80,
+        jpg: Number(args.jpgQuality),
+        png: Number(args.pngQuality),
+        webp: Number(args.webpQuality),
     },
-    // 跳过小于此尺寸的文件（bytes），避免压缩已经很小的图片
-    skipIfSmallerThan: 50 * 1024, // 50KB
+
+    skipIfSmallerThan: Number(args.minSize) * 1024,
+
+    maxIterations: Number(args.iterations),
+
+    minSavingRatio: 0.01
 };
 
 const SUPPORTED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
@@ -50,37 +68,70 @@ async function compressImage(filePath) {
     const fileInfo = await stat(filePath);
     const originalSize = fileInfo.size;
 
-    // 跳过太小的文件
     if (originalSize < CONFIG.skipIfSmallerThan) {
         return {skipped: true, filePath, reason: '文件过小，跳过'};
     }
 
     const ext = extname(filePath).toLowerCase();
-    let pipeline = sharp(filePath);
 
-    if (ext === '.jpg' || ext === '.jpeg') {
-        pipeline = pipeline.jpeg({quality: CONFIG.quality.jpg, progressive: true});
-    }
-    else if (ext === '.png') {
-        pipeline = pipeline.png({quality: CONFIG.quality.png, compressionLevel: 9});
-    }
-    else if (ext === '.webp') {
-        pipeline = pipeline.webp({quality: CONFIG.quality.webp});
-    }
-    else if (ext === '.gif') {
-        // gif 不压缩，sharp 对 gif 支持有限
+    if (ext === '.gif') {
         return {skipped: true, filePath, reason: 'GIF 跳过'};
     }
 
-    // 输出到临时 buffer 再写回原文件
-    const outputBuffer = await pipeline.toBuffer();
-    const newSize = outputBuffer.byteLength;
+    let currentBuffer = await sharp(filePath).toBuffer();
+    let currentSize = currentBuffer.length;
 
-    // 只有压缩后更小才替换
-    if (newSize < originalSize) {
-        await sharp(outputBuffer).toFile(filePath);
-        const saved = ((originalSize - newSize) / originalSize * 100).toFixed(1);
-        return {skipped: false, filePath, originalSize, newSize, saved};
+    let iteration = 0;
+
+    while (iteration < CONFIG.maxIterations) {
+        iteration++;
+
+        let pipeline = sharp(currentBuffer);
+
+        if (ext === '.jpg' || ext === '.jpeg') {
+            pipeline = pipeline.jpeg({
+                quality: CONFIG.quality.jpg,
+                progressive: true
+            });
+        }
+        else if (ext === '.png') {
+            pipeline = pipeline.png({
+                quality: CONFIG.quality.png,
+                compressionLevel: 9
+            });
+        }
+        else if (ext === '.webp') {
+            pipeline = pipeline.webp({
+                quality: CONFIG.quality.webp
+            });
+        }
+
+        const newBuffer = await pipeline.toBuffer();
+        const newSize = newBuffer.length;
+
+        const savingRatio = (currentSize - newSize) / currentSize;
+
+        if (newSize >= currentSize || savingRatio < CONFIG.minSavingRatio) {
+            break;
+        }
+
+        currentBuffer = newBuffer;
+        currentSize = newSize;
+    }
+
+    if (currentSize < originalSize) {
+        await sharp(currentBuffer).toFile(filePath);
+
+        const saved = ((originalSize - currentSize) / originalSize * 100).toFixed(1);
+
+        return {
+            skipped: false,
+            filePath,
+            originalSize,
+            newSize: currentSize,
+            saved,
+            iterations: iteration
+        };
     }
 
     return {skipped: true, filePath, reason: '压缩后更大，保留原文件'};
@@ -112,7 +163,9 @@ async function main() {
             compressedCount++;
             totalOriginalSize += result.originalSize;
             totalNewSize += result.newSize;
-            console.log(`✅ 压缩：${filePath} ${(result.originalSize / 1024).toFixed(1)}KB → ${(result.newSize / 1024).toFixed(1)}KB（节省 ${result.saved}%）`);
+            console.log(
+                `✅ 压缩：${filePath} ${(result.originalSize / 1024).toFixed(1)}KB → ${(result.newSize / 1024).toFixed(1)}KB（节省 ${result.saved}% ，迭代 ${result.iterations} 次）`
+            );
         }
     }
 
