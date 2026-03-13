@@ -4,7 +4,7 @@
  * 用法：node scripts/compress-images.mjs
  */
 import sharp from 'sharp';
-import {readdir, stat} from 'fs/promises';
+import {readdir, stat, readFile, writeFile} from 'fs/promises';
 import {join, extname} from 'path';
 import {Command} from 'commander';
 
@@ -40,6 +40,33 @@ const CONFIG = {
 };
 
 const SUPPORTED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+const CACHE_FILE = '.image-compress-cache.json';
+
+async function loadCache() {
+    try {
+        const data = await readFile(CACHE_FILE, 'utf8');
+        return JSON.parse(data);
+    }
+    catch {
+        return {};
+    }
+}
+
+async function saveCache(cache) {
+    await writeFile(CACHE_FILE, JSON.stringify(cache, null, 2));
+}
+
+// 检查是否应该跳过压缩
+async function shouldSkip(filePath, cache) {
+    const info = await stat(filePath);
+
+    const record = cache[filePath];
+
+    if (!record) return false;
+    if (Math.round(info.mtimeMs) === record.mtime) return true;
+
+    return false;
+}
 
 /**
  * 递归获取目录下所有图片文件路径
@@ -64,9 +91,13 @@ async function getImageFiles(dir) {
 /**
  * 压缩单张图片（原地替换）
  */
-async function compressImage(filePath) {
+async function compressImage(filePath, cache) {
     const fileInfo = await stat(filePath);
     const originalSize = fileInfo.size;
+
+    if (await shouldSkip(filePath, cache)) {
+        return {skipped: true, filePath, reason: '缓存命中，跳过'};
+    }
 
     if (originalSize < CONFIG.skipIfSmallerThan) {
         return {skipped: true, filePath, reason: '文件过小，跳过'};
@@ -148,18 +179,24 @@ async function main() {
         return;
     }
 
+    const cache = await loadCache();
     let totalOriginalSize = 0;
     let totalNewSize = 0;
     let compressedCount = 0;
     let skippedCount = 0;
 
     for (const filePath of imageFiles) {
-        const result = await compressImage(filePath);
+        const result = await compressImage(filePath, cache);
         if (result.skipped) {
             skippedCount++;
             console.log(`⏭️  跳过：${filePath}（${result.reason}）`);
         }
         else {
+            // 更新 cache
+            cache[filePath] = {
+                size: result.newSize,
+                mtime: Date.now()
+            };
             compressedCount++;
             totalOriginalSize += result.originalSize;
             totalNewSize += result.newSize;
@@ -168,6 +205,8 @@ async function main() {
             );
         }
     }
+
+    await saveCache(cache);
 
     console.log('\n📊 压缩完成：');
     console.log(`   压缩：${compressedCount} 张`);
