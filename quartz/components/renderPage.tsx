@@ -4,6 +4,7 @@ import HeaderConstructor from "./Header"
 import BodyConstructor from "./Body"
 import { JSResourceToScriptElement, StaticResources } from "../util/resources"
 import { FullSlug, RelativeURL, joinSegments, normalizeHastElement } from "../util/path"
+import VercelSpeedInsights from "./VercelSpeedInsight"
 import { clone } from "../util/clone"
 import { visit } from "unist-util-visit"
 import { Root, Element, ElementContent } from "hast"
@@ -291,6 +292,7 @@ export function renderPage(
             <Footer {...componentData} />
           </Body>
         </div>
+        <VercelSpeedInsights />
       </body>
       {pageResources.js
         .filter((resource) => resource.loadTime === "afterDOMReady")
