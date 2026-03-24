@@ -1,3 +1,15 @@
+# 个人笔记系统发布网站  
+
+
+使用方法：
+1. 将笔记内容放到content文件夹
+2. 运行`npm run build`即可
+3. 产物存放在`public`文件夹  
+
+图片资源会被自动压缩，压缩算法在`./scripts/compress-images.mjs`文件夹
+
+---
+
 # Quartz v4
 
 > “[One] who works with the door open gets all kinds of interruptions, but [they] also occasionally gets clues as to what the world is and what might be important.” — Richard Hamming
