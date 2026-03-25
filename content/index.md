@@ -1,6 +1,4 @@
 ---
-title: Welcome to Quartz
+title: Welcome to Garfiled's digital garden
 ---
-
-This is a blank Quartz installation.
-See the [documentation](https://quartz.jzhao.xyz) for how to get started.
+This is Garfields's digital garden. Feel free to wander around.
