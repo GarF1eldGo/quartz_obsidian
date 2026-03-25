@@ -311,7 +311,11 @@ a {
 
 .footnotes {
   margin-top: 2rem;
-  border-top: 1px solid var(--lightgray);
+  border-top: 4px solid var(--lightgray);
+
+  .sr-only {
+    display: none;
+  }
 }
 
 input[type="checkbox"] {

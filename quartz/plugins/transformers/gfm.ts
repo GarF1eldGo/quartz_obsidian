@@ -3,6 +3,7 @@ import smartypants from "remark-smartypants"
 import { QuartzTransformerPlugin } from "../types"
 import rehypeSlug from "rehype-slug"
 import rehypeAutolinkHeadings from "rehype-autolink-headings"
+import { rehypeFixFootnoteBackref } from "./rehypeFootenote"
 
 export interface Options {
   enableSmartyPants: boolean
@@ -69,9 +70,10 @@ export const GitHubFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>> =
               },
             },
           ],
+          rehypeFixFootnoteBackref
         ]
       } else {
-        return []
+        return [rehypeFixFootnoteBackref]
       }
     },
   }
