@@ -1,5 +1,5 @@
 ---
-tags: "#public"
+tags: []
 ---
 # 基本使用方法
 创建Store
