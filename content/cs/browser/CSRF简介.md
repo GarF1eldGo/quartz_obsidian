@@ -1,5 +1,7 @@
 ---
-tags: []
+tags: 
+  - "#security"
+  - "#cookie"
 ---
 # 1. 背景
 在没有引入SameSite Cookie机制前，浏览器是如何决定一个请求，携带哪些Cookie的呢？
