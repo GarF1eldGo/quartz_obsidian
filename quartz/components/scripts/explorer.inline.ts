@@ -79,7 +79,11 @@ function toggleFolder(evt: MouseEvent) {
   localStorage.setItem("fileTree", stringifiedFileTree)
 }
 
-function createFileNode(currentSlug: FullSlug, node: FileTrieNode): HTMLLIElement {
+function createFileNode(currentSlug: FullSlug, node: FileTrieNode): HTMLLIElement | null {
+  // 过滤文件夹路径中，包含'assets'字段的路径，不渲染
+  if (node.slug.includes("assets")) {
+    return null;
+  }
   const template = document.getElementById("template-file") as HTMLTemplateElement
   const clone = template.content.cloneNode(true) as DocumentFragment
   const li = clone.querySelector("li") as HTMLLIElement
@@ -99,7 +103,11 @@ function createFolderNode(
   currentSlug: FullSlug,
   node: FileTrieNode,
   opts: ParsedOptions,
-): HTMLLIElement {
+): HTMLLIElement | null{
+  // 过滤文件夹路径中，包含'assets'字段的路径，不渲染
+  if (node.slug.includes("assets")) {
+    return null;
+  }
   const template = document.getElementById("template-folder") as HTMLTemplateElement
   const clone = template.content.cloneNode(true) as DocumentFragment
   const li = clone.querySelector("li") as HTMLLIElement
@@ -148,6 +156,8 @@ function createFolderNode(
     const childNode = child.isFolder
       ? createFolderNode(currentSlug, child, opts)
       : createFileNode(currentSlug, child)
+    
+      if (!childNode) continue
     ul.appendChild(childNode)
   }
 
@@ -215,7 +225,8 @@ async function setupExplorer(currentSlug: FullSlug) {
       const node = child.isFolder
         ? createFolderNode(currentSlug, child, opts)
         : createFileNode(currentSlug, child)
-
+      
+        if (!node) continue
       fragment.appendChild(node)
     }
     explorerUl.insertBefore(fragment, explorerUl.firstChild)

@@ -70,6 +70,8 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
         const title = page.frontmatter?.title
         const tags = page.frontmatter?.tags ?? []
 
+        if (title?.includes("assets")) return null;
+
         return (
           <li class="section-li">
             <div class="section">
