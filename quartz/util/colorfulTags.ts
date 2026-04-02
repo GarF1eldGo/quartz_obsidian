@@ -39,10 +39,13 @@ const hash = (str: string): number => {
     return Math.abs(h)
 }
 
-const getColorFromPalette = (text: string, excludeIndex: number | null = null) => {
+const getColorFromPalette = (text: string, startIndex: number | null = null) => {
+    const gradientRange = 4; // 第二个颜色相对起始颜色的最大偏移
     const len = palette.length;
     const index = hash(text) % len;
-    const finalIdx = index === excludeIndex ? (index + len / 2) % len : index;
+    const finalIdx = startIndex !== null
+        ? startIndex + index % gradientRange >= len ? startIndex - index % gradientRange : startIndex + index % gradientRange 
+        : index;
 
     return {
         index: finalIdx,
