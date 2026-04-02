@@ -24,10 +24,10 @@ const palette = [
     { bg: "#ff8a65", color: "#ffffff" },
 ];
 
-const CACHE_FILE_PATH = path.join(process.cwd(), '.tag-color-cache.json')
+const CACHE_FILE_PATH = path.join(process.cwd(), 'quartz/.quartz-cache/tag-color-cache.json')
 
 interface ColorResult {
-    bg: string
+    bg: string // 纯色或渐变
     color: string
 }
 
@@ -39,37 +39,43 @@ const hash = (str: string): number => {
     return Math.abs(h)
 }
 
-const adjustColor = (hex: string, amount: number): string => {
-    let col = hex.replace("#", "")
-    let num = parseInt(col, 16)
+const getColorFromPalette = (text: string, excludeIndex: number | null = null) => {
+    const len = palette.length;
+    const index = hash(text) % len;
+    const finalIdx = index === excludeIndex ? (index + len / 2) % len : index;
 
-    let r = (num >> 16) + amount
-    let g = ((num >> 8) & 0x00ff) + amount
-    let b = (num & 0x0000ff) + amount
+    return {
+        index: finalIdx,
+        info: palette[finalIdx]
+    };
+}
 
-    r = Math.max(0, Math.min(255, r))
-    g = Math.max(0, Math.min(255, g))
-    b = Math.max(0, Math.min(255, b))
-
-    return "rgb(" + r + ", " + g + ", " + b + ")";
+// 生成渐变色
+const generateGradient = (mainColor: string, subColor: string, angle: number = 90): string => {
+    return `linear-gradient(${angle}deg, ${mainColor}, ${subColor})`
 }
 
 const getColor = (main: string, sub?: string): ColorResult => {
-    const baseIndex = hash(main) % palette.length;
-    let base = palette[baseIndex];
+    const {info: base, index} = getColorFromPalette(main);
 
-    if (sub) {
-        const offset = hash(sub) % 3;
+    if (sub) {        
+        // 有子标签时使用渐变色
+        const {info: subInfo} = getColorFromPalette(sub, index);
+        
         return {
-            bg: adjustColor(base.bg, offset * 5),
             color: base.color,
+            bg: generateGradient(base.bg, subInfo.bg)
         }
     }
 
-    return base;
+    return {
+        bg: base.bg,
+        color: base.color,
+        gradient: undefined
+    };
 };
 
-// 从文件加载缓存
+// 加载缓存
 const loadCacheFromFile = (): Map<string, ColorResult> => {
     const cache = new Map<string, ColorResult>()
     
@@ -91,7 +97,7 @@ const loadCacheFromFile = (): Map<string, ColorResult> => {
     return cache
 }
 
-// 保存缓存到文件
+// 保存缓存
 const saveCacheToFile = (cache: Map<string, ColorResult>): void => {
     try {
         const obj: Record<string, ColorResult> = {}
@@ -104,25 +110,47 @@ const saveCacheToFile = (cache: Map<string, ColorResult>): void => {
     }
 }
 
-// 初始化缓存（从文件加载）
+// 初始化缓存
 const tagColorCache = loadCacheFromFile()
 
+let saveTimeout: NodeJS.Timeout | null = null
+let isDirty = false
+
+const scheduleSaveCache = (): void => {
+    isDirty = true
+    
+    if (saveTimeout) {
+        clearTimeout(saveTimeout)
+    }
+    
+    saveTimeout = setTimeout(() => {
+        if (isDirty) {
+            saveCacheToFile(tagColorCache)
+            isDirty = false
+        }
+        saveTimeout = null
+    }, 5000)
+}
+
 const getTagColor = (text: string): ColorResult => {
-    // 先从内存缓存查找
+    // 检查缓存
     if (tagColorCache.has(text)) {
         return tagColorCache.get(text)!
     }
     
-    // 计算新颜色
+    // 解析主标签和子标签
+    // 格式: "主标签/子标签" 或 "主标签"
     const raw = text.replace(/^#/, "");
-    const [main, sub] = raw.split("/")
-    const result = getColor(main, sub);
+    const parts = raw.split("/")
+    const main = parts[0]
+    const sub = parts.length > 1 ? parts[1] : undefined
     
-    // 存入内存缓存
+    // 获取颜色（如果有子标签会自动生成渐变色）
+    const result = getColor(main, sub)
+    
+    // 存入缓存
     tagColorCache.set(text, result)
-    
-    // 持久化到文件（可以改为定期保存或只在进程退出时保存）
-    saveCacheToFile(tagColorCache)
+    scheduleSaveCache()
     
     return result
 }
@@ -137,7 +165,7 @@ const convertTags = (tags: string[]): Array<{ content: string; color: ColorResul
     }))
 }
 
-// 可选：导出缓存管理函数，方便手动清理
+// 清空缓存
 const clearCache = (): void => {
     tagColorCache.clear()
     try {
@@ -149,7 +177,7 @@ const clearCache = (): void => {
     }
 }
 
-const TAG_BG = 'background-color'
+const TAG_BG = 'background'
 const TAG_COLOR = 'color'
 
-export { convertTags, TAG_BG, TAG_COLOR, clearCache }
+export { convertTags, TAG_BG, TAG_COLOR, getTagColor, clearCache }
