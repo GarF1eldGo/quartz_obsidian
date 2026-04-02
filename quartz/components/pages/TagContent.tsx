@@ -8,6 +8,7 @@ import { htmlToJsx } from "../../util/jsx"
 import { i18n } from "../../i18n"
 import { ComponentChildren } from "preact"
 import { concatenateResources } from "../../util/resources"
+import { convertTags, TAG_BG, TAG_COLOR } from "../../util/colorfulTags"
 
 interface TagContentOptions {
   sort?: SortFn
@@ -52,6 +53,7 @@ export default ((opts?: Partial<TagContentOptions>) => {
       for (const tag of tags) {
         tagItemMap.set(tag, allPagesWithTag(tag))
       }
+      const tagList = convertTags(tag && tag.length > 0 ? tag : [tag]);
       return (
         <div class="popover-hint">
           <article class={classes}>
@@ -59,7 +61,7 @@ export default ((opts?: Partial<TagContentOptions>) => {
           </article>
           <p>{i18n(cfg.locale).pages.tagContent.totalTags({ count: tags.length })}</p>
           <div>
-            {tags.map((tag) => {
+            {tagList.map((tag) => {
               const pages = tagItemMap.get(tag)!
               const listProps = {
                 ...props,
@@ -74,14 +76,18 @@ export default ((opts?: Partial<TagContentOptions>) => {
                   ? contentPage?.description
                   : htmlToJsx(contentPage.filePath!, root)
 
-              const tagListingPage = `/tags/${tag}` as FullSlug
+              const tagListingPage = `/tags/${tag.content}` as FullSlug
               const href = resolveRelative(fileData.slug!, tagListingPage)
 
               return (
                 <div>
                   <h2>
-                    <a class="internal tag-link" href={href}>
-                      {tag}
+                    <a class="internal tag-link" href={href}
+                      style={{
+                        [TAG_BG]: tag.color?.bg,
+                        [TAG_COLOR]: tag.color?.color,
+                      }}>
+                      {tag.content}
                     </a>
                   </h2>
                   {content && <p>{content}</p>}

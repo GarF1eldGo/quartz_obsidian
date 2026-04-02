@@ -3,6 +3,7 @@ import { QuartzPluginData } from "../plugins/vfile"
 import { Date, getDate } from "./Date"
 import { QuartzComponent, QuartzComponentProps } from "./types"
 import { GlobalConfiguration } from "../cfg"
+import { convertTags, TAG_BG, TAG_COLOR } from "../util/colorfulTags"
 
 export type SortFn = (f1: QuartzPluginData, f2: QuartzPluginData) => number
 
@@ -72,6 +73,8 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
 
         if (title?.includes("assets")) return null;
 
+        const tagList = convertTags(tags);
+
         return (
           <li class="section-li">
             <div class="section">
@@ -86,13 +89,17 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                 </h3>
               </div>
               <ul class="tags">
-                {tags.map((tag) => (
+                {tagList.map((tag) => (
                   <li>
                     <a
                       class="internal tag-link"
-                      href={resolveRelative(fileData.slug!, `tags/${tag}` as FullSlug)}
+                      href={resolveRelative(fileData.slug!, `tags/${tag.content}` as FullSlug)}
+                      style={{
+                        [TAG_BG]: tag.color?.bg,
+                        [TAG_COLOR]: tag.color?.color,
+                      }}
                     >
-                      {tag}
+                      {tag.content}
                     </a>
                   </li>
                 ))}

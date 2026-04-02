@@ -1,18 +1,23 @@
 import { FullSlug, resolveRelative } from "../util/path"
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import { classNames } from "../util/lang"
+import { convertTags, TAG_BG, TAG_COLOR } from "../util/colorfulTags"
 
 const TagList: QuartzComponent = ({ fileData, displayClass }: QuartzComponentProps) => {
   const tags = fileData.frontmatter?.tags
   if (tags && tags.length > 0) {
+    const tagList = convertTags(tags)
     return (
       <ul class={classNames(displayClass, "tags")}>
-        {tags.map((tag) => {
-          const linkDest = resolveRelative(fileData.slug!, `tags/${tag}` as FullSlug)
+        {tagList.map((tag) => {
+          const linkDest = resolveRelative(fileData.slug!, `tags/${tag.content}` as FullSlug)
           return (
             <li>
-              <a href={linkDest} class="internal tag-link">
-                {tag}
+              <a href={linkDest} class="internal tag-link" style={{
+                [TAG_BG]: tag.color?.bg,
+                [TAG_COLOR]: tag.color?.color,
+              }}>
+                {tag.content}
               </a>
             </li>
           )
