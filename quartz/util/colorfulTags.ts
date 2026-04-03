@@ -5,6 +5,12 @@
 import fs from 'fs'
 import path from 'path'
 
+interface ColorResult {
+    bg: string // 纯色或渐变
+    color: string
+    index: number // 主色在palette的index
+};
+
 const palette = [
     { bg: "#e57373", color: "#ffffff" },
     { bg: "#f06292", color: "#ffffff" },
@@ -24,59 +30,7 @@ const palette = [
     { bg: "#ff8a65", color: "#ffffff" },
 ];
 
-const CACHE_FILE_PATH = path.join(process.cwd(), 'quartz/.quartz-cache/tag-color-cache.json')
-
-interface ColorResult {
-    bg: string // 纯色或渐变
-    color: string
-}
-
-const hash = (str: string): number => {
-    let h = 0
-    for (let i = 0; i < str.length; i++) {
-        h = str.charCodeAt(i) + ((h << 5) - h)
-    }
-    return Math.abs(h)
-}
-
-const getColorFromPalette = (text: string, startIndex: number | null = null) => {
-    const gradientRange = 4; // 第二个颜色相对起始颜色的最大偏移
-    const len = palette.length;
-    const index = hash(text) % len;
-    const finalIdx = startIndex !== null
-        ? startIndex + index % gradientRange >= len ? startIndex - index % gradientRange : startIndex + index % gradientRange 
-        : index;
-
-    return {
-        index: finalIdx,
-        info: palette[finalIdx]
-    };
-}
-
-// 生成渐变色
-const generateGradient = (mainColor: string, subColor: string, angle: number = 90): string => {
-    return `linear-gradient(${angle}deg, ${mainColor}, ${subColor})`
-}
-
-const getColor = (main: string, sub?: string): ColorResult => {
-    const {info: base, index} = getColorFromPalette(main);
-
-    if (sub) {        
-        // 有子标签时使用渐变色
-        const {info: subInfo} = getColorFromPalette(sub, index);
-        
-        return {
-            color: base.color,
-            bg: generateGradient(base.bg, subInfo.bg)
-        }
-    }
-
-    return {
-        bg: base.bg,
-        color: base.color,
-        gradient: undefined
-    };
-};
+const CACHE_FILE_PATH = path.join(process.cwd(), 'quartz/.quartz-cache/tag-color-cache.json');
 
 // 加载缓存
 const loadCacheFromFile = (): Map<string, ColorResult> => {
@@ -98,7 +52,61 @@ const loadCacheFromFile = (): Map<string, ColorResult> => {
     }
     
     return cache
+};
+
+// 初始化缓存
+const tagColorCache = loadCacheFromFile()
+
+const hash = (str: string): number => {
+    let h = 0
+    for (let i = 0; i < str.length; i++) {
+        h = str.charCodeAt(i) + ((h << 5) - h)
+    }
+    return Math.abs(h)
 }
+
+const getColorFromPalette = (text: string, startIndex: number | null = null): ColorResult => {
+    if (tagColorCache.has(text)) {
+        return tagColorCache.get(text)!;
+    }
+    const gradientRange = 4; // 第二个颜色相对起始颜色的最大偏移
+    const len = palette.length;
+    const index = hash(text) % len;
+    const finalIdx = startIndex !== null
+        ? startIndex + index % gradientRange >= len ? startIndex - index % gradientRange : startIndex + index % gradientRange 
+        : index;
+
+    return {
+        index: finalIdx,
+        ...palette[finalIdx]
+    };
+}
+
+// 生成渐变色
+const generateGradient = (mainColor: string, subColor: string, angle: number = 90): string => {
+    return `linear-gradient(${angle}deg, ${mainColor}, ${subColor})`
+}
+
+const getColor = (main: string, sub?: string): ColorResult => {
+    const {bg, color, index} = getColorFromPalette(main);
+
+    if (sub) {        
+        // 有子标签时使用背景渐变色
+        const {bg: subBg} = getColorFromPalette(sub, index);
+        
+        return {
+            color: color,
+            bg: generateGradient(bg, subBg),
+            index,
+        }
+    }
+
+    return {
+        bg: bg,
+        color: color,
+        index: index
+    };
+};
 
 // 保存缓存
 const saveCacheToFile = (cache: Map<string, ColorResult>): void => {
@@ -112,9 +120,6 @@ const saveCacheToFile = (cache: Map<string, ColorResult>): void => {
         console.warn(`Failed to save tag color cache: ${error}`)
     }
 }
-
-// 初始化缓存
-const tagColorCache = loadCacheFromFile()
 
 let saveTimeout: NodeJS.Timeout | null = null
 let isDirty = false
