@@ -30,7 +30,7 @@ const palette = [
     { bg: "#ff8a65", color: "#ffffff" },
 ];
 
-const CACHE_FILE_PATH = path.join(process.cwd(), 'quartz/.quartz-cache/tag-color-cache.json');
+const CACHE_FILE_PATH = path.join(process.cwd(), 'quartz/.personal-cache/tag-color-cache.json');
 
 // 加载缓存
 const loadCacheFromFile = (): Map<string, ColorResult> => {

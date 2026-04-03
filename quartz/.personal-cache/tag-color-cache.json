@@ -1,0 +1,32 @@
+{
+  "security": {
+    "bg": "#e57373",
+    "color": "#ffffff",
+    "index": 0
+  },
+  "cookie": {
+    "bg": "#fff176",
+    "color": "#000000",
+    "index": 12
+  },
+  "excalidraw": {
+    "bg": "#ffb74d",
+    "color": "#000000",
+    "index": 14
+  },
+  "trail": {
+    "bg": "#4fc3f7",
+    "color": "#000000",
+    "index": 6
+  },
+  "远方的家": {
+    "color": "#ffffff",
+    "bg": "#f06292",
+    "index": 1
+  },
+  "远方的家/云南": {
+    "color": "#ffffff",
+    "bg": "linear-gradient(90deg, #f06292, #9575cd)",
+    "index": 1
+  }
+}

@@ -40,7 +40,7 @@ const CONFIG = {
 };
 
 const SUPPORTED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
-const CACHE_FILE = 'quartz/.quartz-cache/image-compress-cache.json';
+const CACHE_FILE = 'quartz/.personal-cache/image-compress-cache.json';
 
 async function loadCache() {
     try {
