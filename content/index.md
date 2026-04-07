@@ -1,4 +1,14 @@
 ---
-title: Welcome to Garfiled's digital garden
+title: "Garfiled's Digital Garden"
 ---
-This is Garfields's digital garden. Feel free to wander around.
+
+<div class="custom-homepage">
+    <h1>欢迎访问我的博客~</h1>
+</div>
+
+<style>
+    .custom-homepage {
+        text-align: center;
+        margin-top: 50px;
+    }
+</style>
