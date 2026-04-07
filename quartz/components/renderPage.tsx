@@ -52,7 +52,18 @@ export function pageResources(
       },
       ...staticResources.js,
     ],
-    additionalHead: staticResources.additionalHead,
+    additionalHead: [
+      () => (
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/simplelightbox/dist/simple-lightbox.min.css"
+        />
+      ),
+      () => (
+        <script src="https://cdn.jsdelivr.net/npm/simplelightbox/dist/simple-lightbox.min.js"></script>
+      ),
+      ...staticResources.additionalHead
+    ]
   }
 
   resources.js.push({

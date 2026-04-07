@@ -149,8 +149,11 @@ function createRouter() {
   if (typeof window !== "undefined") {
     window.addEventListener("click", async (event) => {
       const { url } = getOpts(event) ?? {}
+      const target = event.target as HTMLElement
+      const anchor = target.closest("a")
+
       // dont hijack behaviour, just let browser act normally
-      if (!url || event.ctrlKey || event.metaKey) return
+      if (!url || event.ctrlKey || event.metaKey || anchor?.classList.contains("lightbox")) return
       event.preventDefault()
 
       if (isSamePage(url) && url.hash) {

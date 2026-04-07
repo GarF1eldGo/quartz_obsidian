@@ -28,5 +28,10 @@
     "color": "#ffffff",
     "bg": "linear-gradient(90deg, #f06292, #9575cd)",
     "index": 1
+  },
+  "public": {
+    "bg": "#4dd0e1",
+    "color": "#000000",
+    "index": 7
   }
 }
