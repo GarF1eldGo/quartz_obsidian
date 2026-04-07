@@ -10,6 +10,8 @@ export function registerEscapeHandler(outsideContainer: HTMLElement | null, cb: 
   function esc(e: HTMLElementEventMap["keydown"]) {
     if (!e.key.startsWith("Esc")) return
     e.preventDefault()
+    if (e && e.target?.classList.contains('simple-lightbox')) return;
+
     cb()
   }
 
