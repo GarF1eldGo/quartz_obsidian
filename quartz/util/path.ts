@@ -1,6 +1,7 @@
 import { slug as slugAnchor } from "github-slugger"
 import type { Element as HastElement } from "hast"
 import { clone } from "./clone"
+import { match } from "node:assert"
 
 // this file must be isomorphic so it can't use node libs (e.g. path)
 
@@ -226,6 +227,21 @@ export interface TransformOptions {
   allSlugs: FullSlug[]
 }
 
+function distance(src: string, target: string): number {
+  const srcParts = src.split("/").slice(0, -1) // 去掉文件名
+  const targetParts = target.split("/").slice(0, -1) // 去掉文件名
+
+  // 找公共前缀长度
+  let i = 0
+  while (i < srcParts.length && i < targetParts.length && srcParts[i] === targetParts[i]) {
+    i++
+  }
+
+  // src 剩余部分 + target 剩余部分长度就是跳转距离
+  const dist = (srcParts.length - i) + (targetParts.length - i)
+  return dist
+}
+
 export function transformLink(src: FullSlug, target: string, opts: TransformOptions): RelativeURL {
   let targetSlug = transformInternalLink(target)
 
@@ -248,6 +264,17 @@ export function transformLink(src: FullSlug, target: string, opts: TransformOpti
       if (matchingFileNames.length === 1) {
         const targetSlug = matchingFileNames[0]
         return (resolveRelative(src, targetSlug) + targetAnchor) as RelativeURL
+      }
+
+      if (matchingFileNames.length > 1) {
+        // 找离当前文件最近的同名文件
+        const closestMatch = matchingFileNames.sort((a, b) => {
+          const aDepth = distance(src, a)
+          const bDepth = distance(src, b)
+          return aDepth - bDepth
+        })[0]
+
+        return (resolveRelative(src, closestMatch) + targetAnchor) as RelativeURL
       }
     }
 

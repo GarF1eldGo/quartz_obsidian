@@ -146,7 +146,7 @@ export const CrawlLinks: QuartzTransformerPlugin<Partial<Options>> = (userOpts) 
                 if (opts.lazyLoad) {
                   node.properties.loading = "lazy"
                 }
-
+                
                 if (!isAbsoluteUrl(node.properties.src, { httpOnly: false })) {
                   let dest = node.properties.src as RelativeURL
                   dest = node.properties.src = transformLink(
@@ -155,6 +155,9 @@ export const CrawlLinks: QuartzTransformerPlugin<Partial<Options>> = (userOpts) 
                     transformOptions,
                   )
                   node.properties.src = dest
+                }
+                else {
+                  console.log("绝对路径: ", node.properties.src)
                 }
               }
             })
