@@ -7,6 +7,7 @@ import { Date, getDate } from "./Date"
 import { GlobalConfiguration } from "../cfg"
 import { i18n } from "../i18n"
 import { classNames } from "../util/lang"
+import { convertTags, TAG_BG, TAG_COLOR } from "../util/colorfulTags"
 
 interface Options {
   title?: string
@@ -42,6 +43,7 @@ export default ((userOpts?: Partial<Options>) => {
           {pages.slice(0, opts.limit).map((page) => {
             const title = page.frontmatter?.title ?? i18n(cfg.locale).propertyDefaults.title
             const tags = page.frontmatter?.tags ?? []
+            const tagList = convertTags(tags);
 
             return (
               <li class="recent-li">
@@ -60,13 +62,17 @@ export default ((userOpts?: Partial<Options>) => {
                   )}
                   {opts.showTags && (
                     <ul class="tags">
-                      {tags.map((tag) => (
+                      {tagList.map((tag) => (
                         <li>
                           <a
                             class="internal tag-link"
-                            href={resolveRelative(fileData.slug!, `tags/${tag}` as FullSlug)}
+                            href={resolveRelative(fileData.slug!, `tags/${tag.content}` as FullSlug)}
+                            style={{
+                              [TAG_BG]: tag.color?.bg,
+                              [TAG_COLOR]: tag.color?.color,
+                            }}
                           >
-                            {tag}
+                            {tag.content}
                           </a>
                         </li>
                       ))}
