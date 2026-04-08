@@ -7,6 +7,7 @@ export interface ColorScheme {
   secondary: string
   tertiary: string
   highlight: string
+  highlightCode: string,
   textHighlight: string
 }
 
@@ -153,6 +154,7 @@ ${stylesheet.join("\n\n")}
   --secondary: ${theme.colors.lightMode.secondary};
   --tertiary: ${theme.colors.lightMode.tertiary};
   --highlight: ${theme.colors.lightMode.highlight};
+  --highlightCode: ${theme.colors.lightMode.highlightCode};
   --textHighlight: ${theme.colors.lightMode.textHighlight};
 
   --titleFont: "${getFontSpecificationName(theme.typography.title || theme.typography.header)}", ${DEFAULT_SANS_SERIF};
@@ -170,6 +172,7 @@ ${stylesheet.join("\n\n")}
   --secondary: ${theme.colors.darkMode.secondary};
   --tertiary: ${theme.colors.darkMode.tertiary};
   --highlight: ${theme.colors.darkMode.highlight};
+  --highlightCode: ${theme.colors.darkMode.highlightCode};
   --textHighlight: ${theme.colors.darkMode.textHighlight};
 }
 `

@@ -109,7 +109,7 @@ export default ((opts?: Partial<FolderContentOptions>) => {
           {options.showFolderCount && (
             <p>
               {i18n(cfg.locale).pages.folderContent.itemsUnderFolder({
-                count: allPagesInFolder.length,
+                count: allPagesInFolder.filter(page => !page.slug?.includes('assets')).length,
               })}
             </p>
           )}
